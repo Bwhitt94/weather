@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Register - Weather Dashboard</title>
+    <!-- HTMX for interactivity -->
+    <script src="https://unpkg.com/htmx.org@1.9.6"></script>
+    <!-- Alpine.js for simple UI interactions -->
+    <script defer src="https://unpkg.com/alpinejs@3.13.3/dist/cdn.min.js"></script>
+    <!-- Tailwind CSS for styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: {
+                            50: '#f0f9ff',
+                            100: '#e0f2fe',
+                            200: '#bae6fd',
+                            300: '#7dd3fc',
+                            400: '#38bdf8',
+                            500: '#0ea5e9',
+                            600: '#0284c7',
+                            700: '#0369a1',
+                            800: '#075985',
+                            900: '#0c4a6e',
+                            950: '#082f49',
+                        }
+                    },
+                    fontFamily: {
+                        'sans': ['Inter', 'sans-serif'],
+                        'heading': ['Montserrat', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            background: linear-gradient(to bottom, #f0f9ff, #e0f7fa);
+            min-height: 100vh;
+        }
+    </style>
+</head>
+<body class="py-10">
+    <div class="container max-w-md mx-auto px-4">
+        <!-- Header -->
+        <div class="text-center mb-8">
+            <div class="text-5xl mb-4">
+                <i class="fas fa-cloud-sun text-primary-500"></i>
+            </div>
+            <h1 class="text-3xl font-bold text-gray-800 font-heading">Weather Dashboard</h1>
+            <p class="text-gray-600 mt-2">Create your account</p>
+        </div>
+        
+        <!-- Flash Messages -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="mb-6 p-4 rounded-lg {% if category == 'error' %}bg-red-100 text-red-700 border-l-4 border-red-500{% else %}bg-blue-100 text-blue-700 border-l-4 border-blue-500{% endif %}">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+        
+        <!-- Registration Form -->
+        <div class="bg-white rounded-xl shadow-md p-8">
+            <h2 class="text-2xl font-semibold mb-6 text-gray-800 font-heading">Register</h2>
+            
+            <form action="{{ url_for('register') }}" method="post">
+                <div class="mb-4">
+                    <label for="username" class="block text-gray-700 mb-2">Username</label>
+                    <div class="relative">
+                        <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+                            <i class="fas fa-user text-gray-400"></i>
+                        </div>
+                        <input 
+                            type="text" 
+                            id="username" 
+                            name="username" 
+                            class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-primary-500 focus:border-primary-500"
+                            placeholder="Choose a username"
+                            required
+                        >
+                    </div>
+                </div>
+                
+                <div class="mb-4">
+                    <label for="email" class="block text-gray-700 mb-2">Email (Optional)</label>
+                    <div class="relative">
+                        <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+                            <i class="fas fa-envelope text-gray-400"></i>
+                        </div>
+                        <input 
+                            type="email" 
+                            id="email" 
+                            name="email" 
+                            class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-primary-500 focus:border-primary-500"
+                            placeholder="Your email address (optional)"
+                        >
+                    </div>
+                </div>
+                
+                <div class="mb-4">
+                    <label for="password" class="block text-gray-700 mb-2">Password</label>
+                    <div class="relative">
+                        <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+                            <i class="fas fa-lock text-gray-400"></i>
+                        </div>
+                        <input 
+                            type="password" 
+                            id="password" 
+                            name="password" 
+                            class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-primary-500 focus:border-primary-500"
+                            placeholder="Create a password"
+                            required
+                        >
+                    </div>
+                </div>
+                
+                <div class="mb-6">
+                    <label for="confirm_password" class="block text-gray-700 mb-2">Confirm Password</label>
+                    <div class="relative">
+                        <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+                            <i class="fas fa-lock text-gray-400"></i>
+                        </div>
+                        <input 
+                            type="password" 
+                            id="confirm_password" 
+                            name="confirm_password" 
+                            class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-primary-500 focus:border-primary-500"
+                            placeholder="Confirm your password"
+                            required
+                        >
+                    </div>
+                </div>
+                
+                <button type="submit" class="w-full bg-primary-600 hover:bg-primary-700 text-white font-medium py-2 px-4 rounded-lg transition duration-300 flex items-center justify-center">
+                    <i class="fas fa-user-plus mr-2"></i>
+                    Create Account
+                </button>
+            </form>
+            
+            <div class="mt-6 text-center text-gray-600">
+                <p>Already have an account? <a href="{{ url_for('login') }}" class="text-primary-600 hover:underline">Login</a></p>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

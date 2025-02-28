@@ -3,68 +3,332 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Weather App</title>
+    <title>Weather Dashboard Pro - Live Updates</title>
+    <!-- HTMX for interactivity -->
+    <script src="https://unpkg.com/htmx.org@1.9.6"></script>
+    <!-- Alpine.js for simple UI interactions -->
+    <script defer src="https://unpkg.com/alpinejs@3.13.3/dist/cdn.min.js"></script>
+    <!-- Tailwind CSS for styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: {
+                            50: '#f0f9ff',
+                            100: '#e0f2fe',
+                            200: '#bae6fd',
+                            300: '#7dd3fc',
+                            400: '#38bdf8',
+                            500: '#0ea5e9',
+                            600: '#0284c7',
+                            700: '#0369a1',
+                            800: '#075985',
+                            900: '#0c4a6e',
+                            950: '#082f49',
+                        },
+                        secondary: {
+                            50: '#fff7ed',
+                            100: '#ffedd5',
+                            200: '#fed7aa',
+                            300: '#fdba74',
+                            400: '#fb923c',
+                            500: '#f97316',
+                            600: '#ea580c',
+                            700: '#c2410c',
+                            800: '#9a3412',
+                            900: '#7c2d12',
+                            950: '#431407',
+                        },
+                        neutral: {
+                            850: '#1f2937',
+                        }
+                    },
+                    fontFamily: {
+                        'sans': ['Inter', 'sans-serif'],
+                        'heading': ['Montserrat', 'sans-serif'],
+                    },
+                    boxShadow: {
+                        'card': '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
+                        'card-hover': '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
+                    }
+                }
+            }
+        }
+    </script>
     <style>
         body {
-            font-family: Arial, sans-serif;
-            max-width: 600px;
-            margin: 0 auto;
-            padding: 20px;
-            line-height: 1.6;
+            font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background-color: #f8fafc;
+            color: #1e293b;
+            line-height: 1.5;
         }
-        h1 {
-            color: #0066cc;
-            text-align: center;
+        
+        .app-container {
+            min-height: 100vh;
+            background: linear-gradient(to bottom, #f0f9ff, #e0f7fa);
         }
-        .form-container {
-            background-color: #f5f5f5;
-            border-radius: 8px;
-            padding: 20px;
-            margin-top: 20px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        
+        .search-container {
+            background-image: url('https://images.unsplash.com/photo-1504608524841-42fe6f032b4b?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80');
+            background-size: cover;
+            background-position: center;
+            position: relative;
         }
-        .form-group {
-            margin-bottom: 15px;
+        
+        .search-container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(3, 105, 161, 0.7);
+            z-index: 0;
         }
-        label {
-            display: block;
-            margin-bottom: 5px;
-            font-weight: bold;
+        
+        .search-content {
+            position: relative;
+            z-index: 1;
         }
-        input[type="text"] {
-            width: 100%;
-            padding: 10px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            font-size: 16px;
-            box-sizing: border-box;
+        
+        .logo-weather {
+            font-size: 2.5rem;
+            background: linear-gradient(45deg, #38bdf8, #0ea5e9, #3b82f6);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            display: inline-block;
         }
-        button {
-            background-color: #0066cc;
-            color: white;
-            border: none;
-            padding: 10px 15px;
-            border-radius: 4px;
-            font-size: 16px;
-            cursor: pointer;
-            width: 100%;
+        
+        .loading-spinner {
+            display: inline-block;
+            width: 50px;
+            height: 50px;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: #ffffff;
+            animation: spin 1s ease-in-out infinite;
         }
-        button:hover {
-            background-color: #0052a3;
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        .fade-in {
+            animation: fadeIn 0.5s ease-in;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        [x-cloak] { display: none !important; }
+        
+        .live-indicator {
+            display: inline-flex;
+            align-items: center;
+            animation: pulse 2s infinite;
+        }
+        
+        .live-dot {
+            height: 8px;
+            width: 8px;
+            border-radius: 50%;
+            background-color: #ef4444;
+            margin-right: 6px;
         }
     </style>
 </head>
 <body>
-    <h1>Weather Lookup</h1>
-    
-    <div class="form-container">
-        <form action="/weather" method="get">
-            <div class="form-group">
-                <label for="city">Enter City or Zip Code:</label>
-                <input type="text" id="city" name="city" placeholder="e.g., London or 90210" required>
+    <div class="app-container">
+        <!-- Navigation -->
+        <nav class="bg-primary-700 text-white shadow-md">
+            <div class="container mx-auto px-4 py-3">
+                <div class="flex justify-between items-center">
+                    <div class="flex items-center">
+                        <a href="{{ url_for('home') }}" class="text-xl font-bold flex items-center">
+                            <i class="fas fa-cloud-sun mr-2"></i>
+                            Weather Dashboard
+                        </a>
+                    </div>
+                    <div>
+                        <ul class="flex space-x-4">
+                            <li><a href="{{ url_for('home') }}" class="hover:text-primary-200 transition duration-300 border-b-2 border-white">Home</a></li>
+                            {% if session.user_id %}
+                                <li><a href="{{ url_for('profile') }}" class="hover:text-primary-200 transition duration-300">Profile</a></li>
+                                <li><a href="{{ url_for('saved_locations') }}" class="hover:text-primary-200 transition duration-300">Saved Locations</a></li>
+                                {% if session.is_admin %}
+                                    <li><a href="{{ url_for('admin_users') }}" class="hover:text-primary-200 transition duration-300">Admin</a></li>
+                                {% endif %}
+                                <li><a href="{{ url_for('logout') }}" class="hover:text-primary-200 transition duration-300">Logout</a></li>
+                            {% else %}
+                                <li><a href="{{ url_for('login') }}" class="hover:text-primary-200 transition duration-300">Login</a></li>
+                                <li><a href="{{ url_for('register') }}" class="hover:text-primary-200 transition duration-300">Register</a></li>
+                            {% endif %}
+                        </ul>
+                    </div>
+                </div>
             </div>
-            <button type="submit">Get Weather</button>
-        </form>
+        </nav>
+        
+        <!-- Flash Messages -->
+        <div class="container mx-auto px-4 py-4">
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="mb-6 p-4 rounded-lg {% if category == 'error' %}bg-red-100 text-red-700 border-l-4 border-red-500{% else %}bg-blue-100 text-blue-700 border-l-4 border-blue-500{% endif %}">
+                            {{ message }}
+                        </div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+        </div>
+        
+        <!-- Search Section -->
+        <div class="search-container py-16 px-4 sm:px-6 mb-8">
+            <div class="search-content max-w-5xl mx-auto text-center">
+                <div class="mb-6">
+                    <i class="fas fa-cloud-sun logo-weather mb-3"></i>
+                    <h1 class="text-4xl sm:text-5xl font-bold text-white font-heading mb-2">Weather Dashboard Pro</h1>
+                    <p class="text-blue-100 text-xl">Real-time weather information with live updates</p>
+                </div>
+                
+                <!-- Weather Search Form -->
+                <form class="max-w-2xl mx-auto mt-10"
+                      hx-post="/weather-display"
+                      hx-target="#weather-results"
+                      hx-indicator=".loading-indicator">
+                    <div class="flex items-center bg-white rounded-full overflow-hidden p-1">
+                        <input 
+                            type="text" 
+                            name="city" 
+                            id="city-input"
+                            placeholder="Enter city name, zip code, or coordinates..."
+                            class="flex-grow py-3 px-6 focus:outline-none text-lg rounded-l-full"
+                            required>
+                        <button 
+                            type="submit" 
+                            class="bg-primary-600 hover:bg-primary-700 text-white px-6 py-3 rounded-full flex items-center font-medium">
+                            <i class="fas fa-search mr-2"></i>
+                            Find Weather
+                        </button>
+                    </div>
+                    <p class="text-blue-100 mt-3 text-sm">Try: "London", "10001", "Tokyo", "Paris"</p>
+                </form>
+                
+                {% if 'user_id' not in session %}
+                <div class="mt-8 bg-white bg-opacity-20 rounded-lg p-4 inline-block">
+                    <p class="text-white">
+                        <i class="fas fa-lock mr-2"></i>
+                        <a href="{{ url_for('login') }}" class="font-bold underline">Login</a> or 
+                        <a href="{{ url_for('register') }}" class="font-bold underline">Register</a> 
+                        to save your favorite locations and customize your experience!
+                    </p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        
+        <div class="container max-w-5xl mx-auto px-4 sm:px-6 pb-16">
+            <!-- Loading Indicator -->
+            <div class="loading-indicator flex justify-center my-16 htmx-indicator hidden">
+                <div class="loading-spinner"></div>
+            </div>
+            
+            <!-- Weather Results -->
+            <div id="weather-results"></div>
+            
+            <!-- Recent Locations -->
+            {% if session.user_id and recent_locations %}
+            <div class="mt-16 bg-white rounded-xl p-6 shadow-md">
+                <h2 class="text-xl font-semibold mb-4 text-gray-800">Your Recent Locations</h2>
+                <div class="flex flex-wrap gap-2">
+                    {% for location in recent_locations %}
+                    <button 
+                        class="px-4 py-2 bg-primary-50 hover:bg-primary-100 text-primary-800 rounded-full transition flex items-center"
+                        hx-post="/weather-display"
+                        hx-target="#weather-results"
+                        hx-indicator=".loading-indicator"
+                        hx-vals='{"city": "{{ location.city_name }}"}'>
+                        <i class="fas fa-map-marker-alt mr-2"></i>
+                        {{ location.display_name or location.city_name }}
+                    </button>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+            
+            <!-- Features Section -->
+            <div class="mt-16 grid grid-cols-1 md:grid-cols-3 gap-8">
+                <div class="bg-white rounded-xl p-6 shadow-md">
+                    <div class="text-primary-600 mb-4">
+                        <i class="fas fa-bolt text-4xl"></i>
+                    </div>
+                    <h3 class="text-xl font-semibold mb-2 text-gray-800">Real-Time Data</h3>
+                    <p class="text-gray-600">Access the latest weather conditions with accurate, up-to-date information.</p>
+                </div>
+                
+                <div class="bg-white rounded-xl p-6 shadow-md">
+                    <div class="text-primary-600 mb-4">
+                        <i class="fas fa-sync-alt text-4xl"></i>
+                    </div>
+                    <h3 class="text-xl font-semibold mb-2 text-gray-800">Live Updates</h3>
+                    <p class="text-gray-600">See weather changes as they happen with automatic data refreshing.</p>
+                </div>
+                
+                <div class="bg-white rounded-xl p-6 shadow-md">
+                    <div class="text-primary-600 mb-4">
+                        <i class="fas fa-chart-line text-4xl"></i>
+                    </div>
+                    <h3 class="text-xl font-semibold mb-2 text-gray-800">Detailed Metrics</h3>
+                    <p class="text-gray-600">View comprehensive weather metrics including temperature, humidity, and more.</p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Footer -->
+        <footer class="bg-gray-800 text-white py-8">
+            <div class="container max-w-5xl mx-auto px-4 sm:px-6">
+                <div class="flex flex-col md:flex-row justify-between items-center">
+                    <div class="mb-4 md:mb-0">
+                        <h2 class="text-2xl font-bold">Weather Dashboard Pro</h2>
+                        <p class="text-blue-300 text-sm mt-1">Powered by WeatherAPI</p>
+                    </div>
+                </div>
+                <div class="mt-8 pt-6 border-t border-gray-700 text-center text-gray-400 text-sm">
+                    <p>&copy; 2025 Weather Dashboard Pro. All rights reserved.</p>
+                </div>
+            </div>
+        </footer>
     </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Setup for any client-side functionality
+            console.log('Weather Dashboard loaded');
+            
+            // Countdown timer for the weather updates
+            const countdownElement = document.getElementById('countdown-timer');
+            if (countdownElement) {
+                let seconds = 60;
+                const interval = setInterval(function() {
+                    seconds--;
+                    countdownElement.textContent = seconds;
+                    if (seconds <= 0) {
+                        seconds = 60;
+                    }
+                }, 1000);
+            }
+        });
+    </script>
 </body>
 </html>
